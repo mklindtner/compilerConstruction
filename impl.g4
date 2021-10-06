@@ -3,12 +3,12 @@ grammar impl;
 /* A small imperative language */
 
 //implement fn as startf 	
+// start   :  
+// 	cs+=command* 
+// 	EOF ;
 start   :  
-	cs+=command* 
+	fn* expr	
 	EOF ;
-
-
-// 
 
 //int fn(...) {};
 //no expr for now

@@ -7,7 +7,9 @@ enum JavaType {
     INTTYPE, BOOLTYPE
 }
 
-class faux { // collection of non-OO auxiliary functions (currently just error)
+
+class faux { // collection of non-OO auxiliary functions (currently just error)    
+    public static final String err_suffix = " Should not evaluate";
     public static void error(String msg) {
         System.err.println("compiler error: " + msg);
         System.exit(-1);
@@ -16,6 +18,18 @@ class faux { // collection of non-OO auxiliary functions (currently just error)
 
 abstract class Expr extends AST {
     abstract public Double eval(Environment env);
+}
+
+class Start extends AST {
+    List<Fn> fns;
+    Expr expr;
+
+    Start(List<Fn> fns, Expr expr) {
+        this.fns = fns;
+        this.expr = expr;
+    }
+
+    public Double eval(Environment env) {faux.error("start" + faux.err_suffix); return null;}
 }
 
 class TypeIdentifier extends AST {
@@ -45,7 +59,7 @@ class Fn extends AST {
     }
 
     public Double eval(Environment env) {
-        faux.error("function should not evaluate");
+        faux.error("function" + faux.err_suffix);
         return null;
     }
 

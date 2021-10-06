@@ -50,25 +50,35 @@ public class main {
 
 class AstMaker extends AbstractParseTreeVisitor<AST> implements implVisitor<AST> {
 
+	// public AST visitStart(implParser.StartContext ctx) {
+	// 	Command program = new NOP();
+	// 	for (implParser.CommandContext c : ctx.cs)
+	// 		program = new Sequence(program, (Command) visit(c));
+	// 	return program;
+	// };
+
 	public AST visitStart(implParser.StartContext ctx) {
-		Command program = new NOP();
-		for (implParser.CommandContext c : ctx.cs)
-			program = new Sequence(program, (Command) visit(c));
-		return program;
+		List<Fn> start_functions = new ArrayList<Fn>();
+		for (implParser.FnContext f: ctx.fn())
+		{
+			start_functions.add((Fn)visit(f));
+		}
+		return new Start(start_functions, (Expr)visit(ctx.expr()));
 	};
+
+
 
 	public AST visitFn(implParser.FnContext ctx) {
 		System.out.println("---fn recursive stack started---");
-		List<TypeIdentifier> types_params = new ArrayList<TypeIdentifier>();
+		List<TypeIdentifier> paramsIdfsFn = new ArrayList<TypeIdentifier>();
 		for(implParser.TypeContext type: ctx.fnparams().type()) 
 		{
-			types_params.add((TypeIdentifier)visit(type));
+			paramsIdfsFn.add((TypeIdentifier)visit(type));
 		}
 		//to be explicit
 		TypeIdentifier ReturnValueFn = (TypeIdentifier)visit(ctx.type());
-		TypeIdentifier ParamsIdfsFn = (TypeIdentifier)visit(types_params);
 		Expr ExprInsideFn = (Expr)visit(ctx.expr());
-		return new Fn(ReturnValueFn,ParamsIdfsFn,ExprInsideFn);
+		return new Fn(ReturnValueFn,paramsIdfsFn,ExprInsideFn);
 	}
 
 	public AST visitFnparams(implParser.FnparamsContext ctx) {
@@ -77,13 +87,13 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements implVisitor<AST>
 	}
 
 	public AST visitIntegerType(implParser.IntegerTypeContext ctx) {
-		System.out.println("visting integer type, ID: " + ctx.ID().getText());
-		return new TypeIdentifier(JavaType.INTTYPE, ctx.ID().getText());
+		System.out.println("visting integer type, ID: " + ctx.FUNCNAMES().getText());
+		return new TypeIdentifier(JavaType.INTTYPE, ctx.FUNCNAMES().getText());
 	}
 
 	public AST visitBoolType(implParser.BoolTypeContext ctx) {
-		System.out.println("visiting bool type, ID:" + ctx.ID().getText());
-		return new TypeIdentifier(JavaType.BOOLTYPE, ctx.ID().getText());
+		System.out.println("visiting bool type, ID:" + ctx.FUNCNAMES().getText());
+		return new TypeIdentifier(JavaType.BOOLTYPE, ctx.FUNCNAMES().getText());
 	}
 
 	public AST visitSingleCommand(implParser.SingleCommandContext ctx) {

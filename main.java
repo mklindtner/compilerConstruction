@@ -3,6 +3,9 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.antlr.v4.runtime.CharStreams;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class main {
 	public static void main(String[] args) throws IOException {
@@ -54,18 +57,28 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements implVisitor<AST>
 		return program;
 	};
 
-	public AST visitFnparams(implParser.FnparamsContext ctx) {
+	public AST visitFn(implParser.FnContext ctx) {
 		System.out.println("---fn recursive stack started---");
 		List<TypeIdentifier> types_params = new ArrayList<TypeIdentifier>();
 		for(implParser.TypeContext type: ctx.fnparams().type()) 
 		{
-			types_params.add(type);
+			types_params.add((TypeIdentifier)visit(type));
 		}
-		return new Fn((Type)visit(ctx.type()),(TypeIdentifier)visit(types_params),(Expr)visit(ctx.expr()));
+		//to be explicit
+		TypeIdentifier ReturnValueFn = (TypeIdentifier)visit(ctx.type());
+		TypeIdentifier ParamsIdfsFn = (TypeIdentifier)visit(types_params);
+		Expr ExprInsideFn = (Expr)visit(ctx.expr());
+		return new Fn(ReturnValueFn,ParamsIdfsFn,ExprInsideFn);
 	}
 
-	public AST visitIntType(implParser.IntegerTypeContext ctx) {
-		
+	public AST visitFnparams(implParser.FnparamsContext ctx) {
+		faux.error("Function Parameters Cannot return a node in a AST Tree");
+		return null;
+	}
+
+	public AST visitIntegerType(implParser.IntegerTypeContext ctx) {
+		System.out.println("visting integer type, ID: " + ctx.ID().getText());
+		return new TypeIdentifier(JavaType.INTTYPE, ctx.ID().getText());
 	}
 
 	public AST visitBoolType(implParser.BoolTypeContext ctx) {

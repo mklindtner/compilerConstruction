@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class main {
 	public static void main(String[] args) throws IOException {
 
@@ -51,34 +50,34 @@ public class main {
 class AstMaker extends AbstractParseTreeVisitor<AST> implements implVisitor<AST> {
 
 	// public AST visitStart(implParser.StartContext ctx) {
-	// 	Command program = new NOP();
-	// 	for (implParser.CommandContext c : ctx.cs)
-	// 		program = new Sequence(program, (Command) visit(c));
-	// 	return program;
+	// Command program = new NOP();
+	// for (implParser.CommandContext c : ctx.cs)
+	// program = new Sequence(program, (Command) visit(c));
+	// return program;
 	// };
 
 	public AST visitStart(implParser.StartContext ctx) {
 		List<Fn> start_functions = new ArrayList<Fn>();
-		for (implParser.FnContext f: ctx.fn())
-		{
-			start_functions.add((Fn)visit(f));
+		for (implParser.FnContext f : ctx.fn()) {
+			start_functions.add((Fn) visit(f));
 		}
-		return new Start(start_functions, (Expr)visit(ctx.expr()));
+		return new Start(start_functions, (Expr) visit(ctx.expr()));
 	};
 
-
-
 	public AST visitFn(implParser.FnContext ctx) {
-		System.out.println("---fn recursive stack started---");
+		System.out.println("---fn stack started---");
 		List<TypeIdentifier> paramsIdfsFn = new ArrayList<TypeIdentifier>();
-		for(implParser.TypeContext type: ctx.fnparams().type()) 
-		{
-			paramsIdfsFn.add((TypeIdentifier)visit(type));
+		System.out.println(ctx.fnparams().type()); // why is FUNCNAMES not in the list?
+		for (implParser.TypeContext type : ctx.fnparams().type()) {
+			System.out.println("here: " + type);
+			paramsIdfsFn.add((TypeIdentifier) visit(type)); // provide how I think it works
 		}
-		//to be explicit
-		TypeIdentifier ReturnValueFn = (TypeIdentifier)visit(ctx.type());
-		Expr ExprInsideFn = (Expr)visit(ctx.expr());
-		return new Fn(ReturnValueFn,paramsIdfsFn,ExprInsideFn);
+		// to be explicit
+		TypeIdentifier ReturnValueFn = (TypeIdentifier) visit(ctx.type());
+		System.out.println("test: " + (TypeIdentifier) visit(ctx.type()));
+		Expr ExprInsideFn = (Expr) visit(ctx.NUM());
+		// Expr ExprInsideFn = (Expr)visit(ctx.expr());
+		return new Fn(ReturnValueFn, paramsIdfsFn, ExprInsideFn);
 	}
 
 	public AST visitFnparams(implParser.FnparamsContext ctx) {
@@ -86,10 +85,16 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements implVisitor<AST>
 		return null;
 	}
 
-	public AST visitIntegerType(implParser.IntegerTypeContext ctx) {
-		System.out.println("visting integer type, ID: " + ctx.FUNCNAMES().getText());
-		return new TypeIdentifier(JavaType.INTTYPE, ctx.FUNCNAMES().getText());
+	public AST visitDoubleType(implParser.DoubleTypeContext ctx) {
+		System.out.println("visting Double type, ID: " + ctx.FUNCNAMES().getText()); // why is FUNCNAMES not added here
+		return new TypeIdentifier(JavaType.DOUBLETYPE, ctx.FUNCNAMES().getText());
 	}
+
+	// public AST visitIntegerType(implParser.IntegerTypeContext ctx) {
+	// System.out.println("visting integer type, ID: " + ctx.FUNCNAMES().getText());
+	// //why is FUNCNAMES not added here
+	// return new TypeIdentifier(JavaType.INTTYPE, ctx.FUNCNAMES().getText());
+	// }
 
 	public AST visitBoolType(implParser.BoolTypeContext ctx) {
 		System.out.println("visiting bool type, ID:" + ctx.FUNCNAMES().getText());
@@ -122,6 +127,13 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements implVisitor<AST>
 		Condition c = (Condition) visit(ctx.c);
 		Command body = (Command) visit(ctx.p);
 		return new While(c, body);
+	}
+
+	public AST visitFunctionCall(implParser.FunctionCallContext ctx) {
+		List<Expr> es = new ArrayList<Expr>();
+		for (implParser.ExprContext ex : ctx.exprs().expr())
+			es.add((Expr) visit(ex));
+		return new FunctionCall(ctx.FUNCNAMES().getText(), es);
 	}
 
 	public AST visitParenthesis(implParser.ParenthesisContext ctx) {

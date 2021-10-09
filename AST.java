@@ -1,24 +1,58 @@
+import java.util.HashMap;
 import java.util.List;
 
-public abstract class AST {
+abstract class AST {
+    abstract public Value eval(Environment env, FnEnvironment fenv);
 };
 
-enum JavaType {
-    INTTYPE, BOOLTYPE
+abstract class Expr extends AST {
+    // abstract public Value eval(Environment env);
 }
 
+// abstract class Expr extends AST {
+// abstract public Value eval(Environment env, Environment Env);
+// }
 
-class faux { // collection of non-OO auxiliary functions (currently just error)    
+enum JavaType {
+    DOUBLETYPE, BOOLTYPE
+}
+
+class faux { // collection of non-OO auxiliary functions (currently just error)
     public static final String err_suffix = " Should not evaluate";
+    public static final String err_value_suffix = " Cannot evaluate that type";
     public static void error(String msg) {
         System.err.println("compiler error: " + msg);
         System.exit(-1);
     }
 }
 
-abstract class Expr extends AST {
-    abstract public Double eval(Environment env);
+class Value {
+    public JavaType valueType;
+    public Double d;
+    public boolean b;
+
+    Value(Double d) {
+        this.valueType = JavaType.DOUBLETYPE;
+        this.d = d;
+    }
+
+    Value(boolean b) {
+        this.valueType = JavaType.BOOLTYPE;
+        this.b = b;
+    }
+
+    public String toString() {
+        if (valueType == JavaType.DOUBLETYPE) {
+            return "" + d;
+        }
+        if (valueType == JavaType.BOOLTYPE) {
+            return "" + b;
+        }
+        System.out.println("valueType is not defined");
+        return null;
+    }
 }
+
 
 class Start extends AST {
     List<Fn> fns;
@@ -29,9 +63,11 @@ class Start extends AST {
         this.expr = expr;
     }
 
-    public Double eval(Environment env) {faux.error("start" + faux.err_suffix); return null;}
+    public Value eval(Environment env, FnEnvironment fnEnv) {
+        faux.error("start" + faux.err_suffix);
+        return null;
+    }
 }
-
 class TypeIdentifier extends AST {
     public JavaType type;
     public String identifier;
@@ -41,8 +77,8 @@ class TypeIdentifier extends AST {
         this.identifier = identifier;
     }
 
-    public Double eval(Environment env) {
-        faux.error("TypeIdentifier should not evaluate");
+    public Value eval(Environment env, FnEnvironment fnEnv) {
+        faux.error("TypeIdentifier " + faux.err_suffix);
         return null;
     }
 }
@@ -58,12 +94,46 @@ class Fn extends AST {
         this.expr = e;
     }
 
-    public Double eval(Environment env) {
+    public Value eval(Environment env, FnEnvironment fnEnv) {
         faux.error("function" + faux.err_suffix);
         return null;
     }
-
 }
+
+class FnCall extends Expr {
+    public List<Expr> exprs;
+    public String fnName;
+
+    FnCall(String fnName, List<Expr> exprs) {
+        this.fnName = fnName;
+        this.exprs = exprs;
+    }
+
+    public Value eval(Environment env, FnEnvironment fnEnv) {
+        faux.error("FnCall" + faux.err_suffix);
+        return null;
+    }
+}
+
+class FnEnvironment {
+	private HashMap<String, Fn> fns = new HashMap<>();
+
+	public FnEnvironment() {
+	}
+
+	public void setFunction(String name, Fn f) {
+		fns.put(name, f);
+	}
+
+	public Fn getFunction(String name) {
+		Fn f = fns.get(name);
+		if (f == null)
+			faux.error("Function not defined: " + name);
+		return f;
+	}
+}
+
+//move Env here
 
 class UnaryMinus extends Expr {
     Expr e1;
@@ -72,10 +142,16 @@ class UnaryMinus extends Expr {
         this.e1 = e1;
     }
 
-    public Double eval(Environment env) {
-        Double d = e1.eval(env);
-        System.out.println("eval: " + d);
-        return -1 * d;
+    public Value eval(Environment env, FnEnvironment fnEnv) {
+        Value val = e1.eval(env, fnEnv);
+        if(val.valueType == JavaType.DOUBLETYPE) 
+        {
+            System.out.println("eval: " + val);
+
+            return new Value(-1 * val.d);
+        }
+        System.out.println(""+val.valueType+faux.err_value_suffix);
+        return null;
     }
 }
 
@@ -89,12 +165,19 @@ class MultDiv extends Expr {
         this.e2 = e2;
     }
 
-    public Double eval(Environment env) {
-        System.out.println(env);
-        if (op.equals("*")) {
-            return e1.eval(env) * e2.eval(env);
-        }
-        return e1.eval(env) / e2.eval(env);
+    public Value eval(Environment env, FnEnvironment fnEnv) {
+        Value val1 = e1.eval(env, fnEnv);
+        Value val2 = e2.eval(env, fnEnv);
+        if(val1.valueType == JavaType.DOUBLETYPE && val2.valueType == JavaType.DOUBLETYPE)
+        {
+            if(op.equals("*"))
+            {
+                return new Value(val1.d * val2.d);
+            }
+            return new Value(val1.d / val2.d);
+        }        
+        System.out.println(""+val1.valueType+" with " + val2.valueType + faux.err_value_suffix);      
+        return null;
     }
 }
 
@@ -106,9 +189,17 @@ class Sub extends Expr {
         this.e2 = e2;
     }
 
-    public Double eval(Environment env) {
-        System.out.println("inside SUB\tenv:" + env);
-        return e1.eval(env) - e2.eval(env);
+    public Value eval(Environment env, FnEnvironment fnEnv) {
+        // System.out.println("inside SUB\tenv:" + env);
+        Value val1 = e1.eval(env, fnEnv);
+        Value val2 = e2.eval(env, fnEnv);
+        if(val1.valueType == JavaType.DOUBLETYPE && val2.valueType == JavaType.DOUBLETYPE)
+        {
+            return new Value(val1.d - val1.d);
+            // return e1.eval(env) - e2.eval(env);
+        }
+        System.out.println(""+val1.valueType+" with " + val2.valueType + faux.err_value_suffix);      
+        return null;
     }
 }
 

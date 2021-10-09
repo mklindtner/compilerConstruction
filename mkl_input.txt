@@ -1,5 +1,2 @@
 /* Example program for the imperative language impl */
-int f(int i) { };
-
-output result;
-
+double foo(int i) = 2;

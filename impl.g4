@@ -12,14 +12,15 @@ start   :
 
 //int fn(...) {};
 //no expr for now
-fn : type '(' fnparams ')' '{'expr'};';
+fn : type '(' fnparams ')' '=' NUM;
 
-type	: 'int' FUNCNAMES #IntegerType
-		| 'bool' FUNCNAMES #BoolType
+type	: 
+	'double' FUNCNAMES #DoubleType
+	| 'bool' FUNCNAMES #BoolType
 	;
 
 
-fnparams : type (',' | type)* ;
+fnparams : type (',' type)* ;
 
 program : 
 	c=command                      	 # SingleCommand
@@ -32,14 +33,19 @@ command :
         | 'while' '('c=condition')' p=program  # WhileLoop
 	;
 	
-expr	
-	: MIN e1=expr 					# UnaryMinus	
+expr	: 
+	MIN e1=expr 					# UnaryMinus	
 	| expr op=MULTDIVOP expr 		# MultDiv		
 	| e1=expr op=ADDSUBOP e2=expr 	# AddSub
 	| c=FLOAT     	      			# Constant
 	| x=ID		      				# Variable
 	| '(' e=expr ')'      			# Parenthesis
+	| FUNCNAMES '(' expr ')'		# FnCall
 	;
+
+
+exprs : expr (',' expr)* ;
+
 
 condition : e1=expr '!=' e2=expr # Unequal
 	  // ... extend me 
@@ -53,7 +59,7 @@ NUM        	   : [0-9] ;
 MIN	       	   : '-' ;
 MULTDIVOP  	   : ('*' | '/') ;
 ADDSUBOP	   : ('+' | '-') ;
-FUNCNAMES	   : ('A'..'Z'|'a'..'z'|'^') ; //why '^' ? BECAUSE I CAN, ALSO FUCK NUMBERS IN FUNCTION NAMES
+FUNCNAMES	   : ('A'..'Z'|'a'..'z'|'^')+ ; //why '^' ? BECAUSE I CAN, ALSO FUCK NUMBERS IN FUNCTION NAMES
 
 
 WHITESPACE : [ \n\t\r]+ -> skip;
